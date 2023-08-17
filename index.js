@@ -1,6 +1,7 @@
 const fs = require("fs");
 const http = require("http");
 const url = require("url");
+const replaceTemp = require("./modules/replaceTemplate.js");
 /////////////////
 
 //FILES
@@ -29,21 +30,6 @@ const url = require("url");
 ///////////////////
 
 //SERVER
-const replaceTemp = (temp, product) => {
-  let output = temp.replace(/{%PRODUCTNAME%}/g, product.productName);
-  output = output.replace(/{%IMAGE%}/g, product.image);
-  output = output.replace(/{%PRICE%}/g, product.price);
-  output = output.replace(/{%FROM%}/g, product.from);
-  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
-  output = output.replace(/{%QUANTITY%}/g, product.quantity);
-  output = output.replace(/{%DESCRIPTION%}/g, product.description);
-  output = output.replace(/{%ID%}/g, product.id);
-
-  if (!product.organic)
-    output = output.replace(/{%NOT_ORGANIC%}/g, "not-organic");
-
-  return output;
-};
 
 const tempOverview = fs.readFileSync(
   `${__dirname}/templates/template-overview.html`,
@@ -62,10 +48,10 @@ const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8");
 const dataObj = JSON.parse(data);
 //console.log(dataObj);
 const server = http.createServer((req, res) => {
-  const { query, portName } = url.parse(req.url, true);
+  const { query, pathname } = url.parse(req.url, true);
   //console.log(url.parse(req.url, true));
   //overview
-  if (portName === "/" || portName === "/overview") {
+  if (pathname === "/" || pathname === "/overview") {
     res.writeHead(200, { "Content-type": "text/html" });
     const cardsHtml = dataObj.map((el) => replaceTemp(tempCard, el)).join("");
     //console.log(cardsHtml);
@@ -73,14 +59,14 @@ const server = http.createServer((req, res) => {
     res.end(output);
   }
   //product
-  else if (portName === "/product") {
+  else if (pathname === "/product") {
     res.writeHead(200, { "Content-type": "text/html" });
     const product = dataObj[query.id];
     const output = replaceTemp(tempProduct, product);
     res.end(output);
   }
   //api
-  else if (portName === "/api") {
+  else if (pathname === "/api") {
     res.writeHead(200, { "Content-type": "application/json" });
     res.end(data);
   } else {
